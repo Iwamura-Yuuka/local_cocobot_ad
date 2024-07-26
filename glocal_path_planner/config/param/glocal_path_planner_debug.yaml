@@ -1,0 +1,13 @@
+# デバック用
+
+# デバック用の情報を可視化するかの設定用
+# trueなら可視化
+visualize_target_goal: true  # target_goal
+
+# 制御周波数[Hz]
+hz: 10                          # ループ周波数 [Hz]
+
+# frame_id
+node_frame: "base_footprint"  # 生成するノードのframe_id
+path_frame: "base_footprint"  # 生成するpathのframe_id
+goal_frame: "odom"            # local_goalのframe_id
