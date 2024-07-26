@@ -41,11 +41,12 @@ private:
   void local_goal_callback(const geometry_msgs::PointStampedConstPtr& msg); 
 
   // 引数あり関数
-  double normalize_angle(double theta);            // 適切な角度(-M_PI ~ M_PI)を返す
+  // double normalize_angle(double theta);            // 適切な角度(-M_PI ~ M_PI)を返す
+  double calc_distance(const double x1, const double y1, const double x2, const double y2);
 
   // 引数なし関数
   bool is_in_map();                               // local_goalがマップ内の場合、trueを返す
-  double calc_direction();                       // local_goalの方位を計算
+  // double calc_direction();                       // local_goalの方位を計算
   void calc_target_goal();                        // target_goal（マップ内のlocal_goal）を計算
   Node get_goal_node();                              // ゴールノードを取得
   void create_glocal_path();                       // glocal_pathを生成
