@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cocobot_ad_experiment</name>
+  <version>0.0.0</version>
+  <description>The cocobot_ad_experiment package</description>
+  <maintainer email="user@todo.todo">Iwamura Yuuka</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+</package>
