@@ -59,23 +59,32 @@ bool GlocalPathPlanner::is_in_map()
         return false;
 }
 
-// local_goalの方位を計算
-double GlocalPathPlanner::calc_direction()
+// // local_goalの方位を計算
+// double GlocalPathPlanner::calc_direction()
+// {
+//     const double theta = atan2(local_goal_.point.y, local_goal_.point.x);
+
+//     return normalize_angle(theta);
+// }
+
+// // 適切な角度(-M_PI ~ M_PI)を返す
+// double GlocalPathPlanner::normalize_angle(double theta)
+// {
+//     if(theta > M_PI)
+//         theta -= 2.0 * M_PI;
+//     if(theta < -M_PI)
+//         theta += 2.0 * M_PI;
+
+//     return theta;
+// }
+
+// 距離を計算
+double GlocalPathPlanner::calc_distance(const double x1, const double y1, const double x2, const double y2)
 {
-    const double theta = atan2(local_goal_.point.y, local_goal_.point.x);
+    const double dx = x1 - x2;
+    const double dy = y1 - y2;
 
-    return normalize_angle(theta);
-}
-
-// 適切な角度(-M_PI ~ M_PI)を返す
-double GlocalPathPlanner::normalize_angle(double theta)
-{
-    if(theta > M_PI)
-        theta -= 2.0 * M_PI;
-    if(theta < -M_PI)
-        theta += 2.0 * M_PI;
-
-    return theta;
+    return hypot(dx, dy);
 }
 
 // target_goal（マップ内のlocal_goal）を計算
@@ -90,50 +99,30 @@ void GlocalPathPlanner::calc_target_goal()
     target_goal_.header.stamp = local_goal_.header.stamp;
     target_goal_.header.frame_id = local_goal_.header.frame_id;
 
-    // local_goalの方位を計算
-    const double theta = calc_direction();
-    ROS_INFO_STREAM("theta: " << theta);
+    double target_goal_x = density_map_.info.origin.position.x + (density_map_.info.resolution / 2.0);
+    double target_goal_y = density_map_.info.origin.position.y + (density_map_.info.resolution / 2.0);
 
-    if(abs(theta) <= M_PI/4.0)
+    double min_dist = 100.0;  // 適当に大きい値で初期化
+
+    // local_goalに最も近いtarget_goalを計算
+    for(int i=0; i<density_map_.info.width; i++)
     {
-      target_goal_.point.x = (density_map_.info.width * density_map_.info.resolution) - (density_map_.info.resolution / 2.0);
-
-      // double x_length = (density_map_.info.width * density_map_.info.resolution) - (density_map_.info.resolution / 2.0);
-      // target_goal_.point.y = density_map_.info.origin.position.y + (x_length * tan(theta));
-      target_goal_.point.y = abs(target_goal_.point.x) * tan(theta);
-      ROS_INFO_STREAM("aaa");
-    }
-    else if((abs(theta) > M_PI/4.0) && (abs(theta) <= M_PI/2.0))
-    {
-      // double y_length = (density_map_.info.height * density_map_.info.resolution / 2.0) - (density_map_.info.resolution / 2.0);
-      // double y_length = (density_map_.info.height * density_map_.info.resolution / 4.0) - (density_map_.info.resolution / 2.0);
-      // target_goal_.point.x = density_map_.info.origin.position.x + (y_length / tan(theta));
-
-      if(theta > 0)
+      for(int j=0; j<density_map_.info.height; j++)
       {
-        target_goal_.point.y = (density_map_.info.height * density_map_.info.resolution / 2.0) - (density_map_.info.resolution / 2.0); 
-      }
-      else
-      {
-        target_goal_.point.y = (density_map_.info.height * density_map_.info.resolution / 2.0) + (density_map_.info.resolution / 2.0);
+        const double dist = calc_distance(local_goal_.point.x, local_goal_.point.y, target_goal_x, target_goal_y);
+
+        if(dist < min_dist)
+        {
+          min_dist = dist;
+          target_goal_.point.x = target_goal_x;
+          target_goal_.point.y = target_goal_y;
+        }
+
+        target_goal_y += density_map_.info.resolution;
       }
 
-      target_goal_.point.x = abs(target_goal_.point.y) /tan(theta);
-      ROS_INFO_STREAM("bbb");
-    }
-    else
-    {
-      target_goal_.point.x = density_map_.info.resolution / 2.0;
-      
-      if(theta > 0)
-      {
-        target_goal_.point.y = (density_map_.info.height * density_map_.info.resolution / 2.0) - (density_map_.info.resolution / 2.0);
-      }
-      else
-      {
-        target_goal_.point.y = (density_map_.info.height * density_map_.info.resolution / 2.0) + (density_map_.info.resolution / 2.0);
-      }
-      ROS_INFO_STREAM("ccc");
+      target_goal_x += density_map_.info.resolution;
+      target_goal_y = density_map_.info.origin.position.y + (density_map_.info.resolution / 2.0);
     }
   }
 
