@@ -1,0 +1,14 @@
+# デバック用
+
+# 制御周波数[Hz]
+hz: 10              # ループ周波数 [Hz]
+
+# frame_id
+obs_map_frame: "base_footprint"  # 障害物マップ
+
+# map
+map_size: 10.0  # マップの一辺の長さ [m]
+map_reso: 0.05  # マップの解像度 [m/cell]
+
+# 衝突半径
+margin: 0.5     # 衝突半径 [m]
