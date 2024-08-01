@@ -10,7 +10,7 @@ SpacissObsMapCreator::SpacissObsMapCreator()
   private_nh_.param("margin", margin_, {0.5});
 
   // subscriber
-  sub_people_states_ = nh_.subscribe("/selected_current_people_states", 1, &SpacissObsMapCreator::people_states_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+  sub_people_states_ = nh_.subscribe("/transformed_people_states", 1, &SpacissObsMapCreator::people_states_callback, this, ros::TransportHints().reliable().tcpNoDelay());
 
   // publisher
   pub_obs_map_ = nh_.advertise<nav_msgs::OccupancyGrid>("/raw_obs_map", 1);
