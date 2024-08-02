@@ -1,13 +1,15 @@
 #include "spaciss_obs_map_creator/spaciss_obs_map_creator.h"
 
-SpacissObsMapCreator::SpacissObsMapCreator()
+SpacissObsMapCreator::SpacissObsMapCreator():private_nh_("~")
 {
   // param
   private_nh_.param("hz", hz_, {10});
   private_nh_.param("obs_map_frame", obs_map_frame_, {"base_footprint"});
-  private_nh_.param("map_size", map_size_, {5.0});
+  private_nh_.param("map_size", map_size_, {10.0});
   private_nh_.param("map_reso", map_reso_, {0.1});
-  private_nh_.param("margin", margin_, {0.5});
+  private_nh_.param("margin", margin_, {1.0});
+
+  ROS_ERROR_STREAM("margin: " << margin_);
 
   // subscriber
   sub_people_states_ = nh_.subscribe("/transformed_people_states", 1, &SpacissObsMapCreator::people_states_callback, this, ros::TransportHints().reliable().tcpNoDelay());
