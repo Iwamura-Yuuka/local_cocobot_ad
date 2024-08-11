@@ -53,6 +53,7 @@ private:
   void create_path(Node current_node);                                                       // ノードからパスを生成
   int search_node_from_set(const Node node, const std::vector<Node>& set);                   // 指定したリストに含まれるか検索
   void transfer_node(const Node node, std::vector<Node>& set1, std::vector<Node>& set2);     // set1からset2にノードを移動
+  void creat_neighbor_nodes(const Node current_node, std::vector<Node>& neighbor_nodes);     // 現在のノードをもとに隣接ノードを作成
   void update_set(Node current_node);                                                        // 隣接ノードをもとにOpenリスト・Closeリストを更新
   void show_node_point(const Node node);                                                     // ノードをRvizに表示（デバック用）
   

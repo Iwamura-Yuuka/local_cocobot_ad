@@ -308,11 +308,13 @@ void GlocalPathPlanner::transfer_node(const Node node, std::vector<Node>& set1, 
 // 現在のノードをもとに隣接ノードを作成
 void GlocalPathPlanner::creat_neighbor_nodes(const Node current_node, std::vector<Node>& neighbor_nodes)
 {
+  // kokokara!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   // 動作モデルの作成
   std::vector<Motion> motion_model;
-  creat_motion_model(motion_model);
+  // creat_motion_model(motion_model);
 
-  // kokokara!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+   
 }
 
 
