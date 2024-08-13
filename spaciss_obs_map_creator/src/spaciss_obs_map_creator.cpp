@@ -8,9 +8,7 @@ SpacissObsMapCreator::SpacissObsMapCreator():private_nh_("~")
   private_nh_.param("map_size", map_size_, {10.0});
   private_nh_.param("map_reso", map_reso_, {0.1});
   private_nh_.param("margin", margin_, {1.0});
-
-  ROS_ERROR_STREAM("margin: " << margin_);
-
+  
   // subscriber
   sub_people_states_ = nh_.subscribe("/transformed_people_states", 1, &SpacissObsMapCreator::people_states_callback, this, ros::TransportHints().reliable().tcpNoDelay());
 
@@ -33,6 +31,13 @@ SpacissObsMapCreator::SpacissObsMapCreator():private_nh_("~")
 // 歩行者情報のコールバック関数
 void SpacissObsMapCreator::people_states_callback(const pedestrian_msgs::PeopleStatesConstPtr& msg)
 {
+  while(people_states_.size() > 0)
+  {
+    // people_states_の配列のうち取得済みのデータ（配列の先頭の要素）を削除
+    // これをしないと，front() でデータを取得する際，同じデータしか取得できない
+    people_states_.pop();
+  }
+
   people_states_.emplace(msg);
   flag_people_states_ = true;
 }
@@ -137,10 +142,6 @@ void SpacissObsMapCreator::create_obs_map()
   }
 
   pub_obs_map_.publish(obs_map_);
-  
-  // future_people_states_の配列のうち取得済みのデータ（配列の先頭の要素）を削除
-  // これをしないと，front() でデータを取得する際，同じデータしか取得できない
-  people_states_.pop();
 }
 
 //メイン文で実行する関数
