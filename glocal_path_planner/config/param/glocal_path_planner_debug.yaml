@@ -7,7 +7,12 @@ visualize_for_debug: true
 # 制御周波数[Hz]
 hz: 10                          # ループ周波数 [Hz]
 
+# 評価関数関連
+density_map_weight: 1.0       # density_mapのコストの重みづけ定数
+
+# 終了判定
+goal_tolerance: 2.0           # local_goal_に対する許容誤差 [m]（密度マップの刻み幅の2倍以上にすること！）
+
 # frame_id
-node_frame: "base_footprint"  # 生成するノードのframe_id
 path_frame: "base_footprint"  # 生成するpathのframe_id
 goal_frame: "odom"            # local_goalのframe_id

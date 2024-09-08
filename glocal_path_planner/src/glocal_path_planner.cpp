@@ -5,10 +5,10 @@ GlocalPathPlanner::GlocalPathPlanner():private_nh_("~")
   // param
   private_nh_.param("visualize_for_debug", visualize_for_debug_, {false});
   private_nh_.param("hz", hz_, {10});
-  private_nh_.param("node_frame", node_frame_, {"base_footprint"});
   private_nh_.param("path_frame", path_frame_, {"base_footprint"});
   private_nh_.param("goal_frame", goal_frame_, {"odom"});
   private_nh_.param("goal_tolerance", goal_tolerance_, {0.5});
+  private_nh_.param("density_map_weight", density_map_weight_, {1.0});
 
   // subscriber
   sub_density_map_ = nh_.subscribe("/density_map", 1, &GlocalPathPlanner::density_map_callback, this, ros::TransportHints().reliable().tcpNoDelay());
@@ -23,6 +23,11 @@ GlocalPathPlanner::GlocalPathPlanner():private_nh_("~")
     pub_target_goal_ = nh_.advertise<geometry_msgs::PointStamped>("/target_goal", 1);
     pub_current_node_ = nh_.advertise<geometry_msgs::PointStamped>("/current_node", 1);
   }
+
+  // path
+  glocal_path_.header.frame_id = path_frame_;
+  glocal_path_.poses.reserve(1000);
+  current_node_.header.frame_id = path_frame_;
 }
 
 // density_mapのコールバック関数
@@ -30,6 +35,7 @@ void GlocalPathPlanner::density_map_callback(const nav_msgs::OccupancyGridConstP
 {
   density_map_ = *msg;
   flag_density_map_ = true;
+  ROS_INFO_STREAM("density_map is received.");
 }
 
 // local_goalのコールバック関数
@@ -39,13 +45,15 @@ void GlocalPathPlanner::local_goal_callback(const geometry_msgs::PointStampedCon
 
   try
   {
-    transform = tf_buffer_.lookupTransform(node_frame_, goal_frame_, ros::Time(0));
+    transform = tf_buffer_.lookupTransform(path_frame_, goal_frame_, ros::Time(0));
     flag_local_goal_ = true;
+    ROS_INFO_STREAM("local_goal is received.");
   }
   catch(tf2::TransformException& ex)
   {
     ROS_WARN("%s", ex.what());
     flag_local_goal_ = false;
+    ROS_INFO_STREAM("local_goal is not received.");
     return;
   }
 
@@ -63,25 +71,6 @@ bool GlocalPathPlanner::is_in_map()
   else
     return false;
 }
-
-// // local_goalの方位を計算
-// double GlocalPathPlanner::calc_direction()
-// {
-//     const double theta = atan2(local_goal_.point.y, local_goal_.point.x);
-
-//     return normalize_angle(theta);
-// }
-
-// // 適切な角度(-M_PI ~ M_PI)を返す
-// double GlocalPathPlanner::normalize_angle(double theta)
-// {
-//     if(theta > M_PI)
-//         theta -= 2.0 * M_PI;
-//     if(theta < -M_PI)
-//         theta += 2.0 * M_PI;
-
-//     return theta;
-// }
 
 // 距離を計算
 double GlocalPathPlanner::calc_distance(const double x1, const double y1, const double x2, const double y2)
@@ -132,9 +121,7 @@ void GlocalPathPlanner::calc_target_goal()
   }
 
   if(visualize_for_debug_)
-  {
     pub_target_goal_.publish(target_goal_);
-  }
 }
 
 // ノードが障害物上にあるかの判定
@@ -268,11 +255,12 @@ void GlocalPathPlanner::create_path(Node current_node)
       }
 
       if(i == closed_set_.size() - 1)
-      {
         ROS_ERROR_STREAM("parent node is not found.");
-      }
     }
   }
+
+  reverse(path.poses.begin(), path.poses.end());
+  glocal_path_.poses.insert(glocal_path_.poses.end(), path.poses.begin(), path.poses.end());
 }
 
 // 指定したリストに含まれるか検索
@@ -305,18 +293,110 @@ void GlocalPathPlanner::transfer_node(const Node node, std::vector<Node>& set1, 
   set2.push_back(node);
 }
 
-// 現在のノードをもとに隣接ノードを作成
-void GlocalPathPlanner::creat_neighbor_nodes(const Node current_node, std::vector<Node>& neighbor_nodes)
+// 動作を作成
+Motion GlocalPathPlanner::get_motion(const int dx, const int dy, const double cost)
 {
-  // kokokara!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  if((1 < abs(dx)) || (1 < abs(dy)))
+    ROS_ERROR_STREAM("dx or dy is invalid.");
 
-  // 動作モデルの作成
-  std::vector<Motion> motion_model;
-  // creat_motion_model(motion_model);
+  Motion motion;
+  motion.x = dx;
+  motion.y = dy;
+  motion.cost = cost;
 
-   
+  return motion;
 }
 
+// 動作モデルを作成
+void GlocalPathPlanner::create_motion_model(std::vector<Motion>& motion_set)
+{
+  motion_set.push_back(get_motion( 1,  0, 1));  // 前
+  motion_set.push_back(get_motion( 0,  1, 1));  // 左
+  motion_set.push_back(get_motion(-1,  0, 1));  // 後ろ
+  motion_set.push_back(get_motion( 0, -1, 1));  // 右
+
+  motion_set.push_back(get_motion(-1,-1, sqrt(2)));  // 右後ろ
+  motion_set.push_back(get_motion(-1, 1, sqrt(2)));  // 左後ろ
+  motion_set.push_back(get_motion( 1,-1, sqrt(2)));  // 右前
+  motion_set.push_back(get_motion( 1, 1, sqrt(2)));  // 左前
+}
+
+// 密度マップのコストを計算
+double GlocalPathPlanner::calc_density_map_value(const Node node)
+{
+  const int index = node.index_x + (node.index_y * density_map_.info.width);
+
+  double cost = density_map_.data[index];
+
+  // 正規化
+  // コストが0以下の場合は0にする
+  if(cost > 0)
+    cost /= 100.0;
+  else
+    cost = 0.0;
+  
+  return cost;
+}
+
+// 隣接ノードを取得
+Node GlocalPathPlanner::get_neighbor_node(const Node node, const Motion motion)
+{
+  Node neighbor_node;
+
+  // 移動
+  neighbor_node.index_x = node.index_x + motion.x;
+  neighbor_node.index_y = node.index_y + motion.y;
+
+  // f値を記録
+  // 密度マップのコストを考慮
+  neighbor_node.cost = (node.cost - calc_heuristic(node)) + calc_heuristic(neighbor_node) + motion.cost + density_map_weight_ * calc_density_map_value(neighbor_node);
+
+  // 親ノードを記録
+  neighbor_node.parent_index_x = node.index_x;
+  neighbor_node.parent_index_y = node.index_y;
+
+  return neighbor_node;
+}
+
+// 現在のノードをもとに隣接ノードを作成
+void GlocalPathPlanner::create_neighbor_nodes(const Node current_node, std::vector<Node>& neighbor_nodes)
+{
+  // 動作モデルの作成
+  std::vector<Motion> motion_model;
+  create_motion_model(motion_model);
+  const int motion_num = motion_model.size();
+
+  // 隣接ノードを作成
+  for(int i=0; i<motion_num; i++)
+  {
+    Node neighbor_node = get_neighbor_node(current_node, motion_model[i]); // 隣接ノードを取得
+    neighbor_nodes.push_back(neighbor_node);
+  }  
+}
+
+// ノードが障害物か判断
+bool GlocalPathPlanner::is_obs(const Node node)
+{
+  const int grid_index = node.index_x + (node.index_y * density_map_.info.width);
+  return density_map_.data[grid_index] == 100;
+}
+
+// OpenリストまたはCloseリストに含まれるか調べる
+std::tuple<int, int> GlocalPathPlanner::search_node(const Node node)
+{
+  // Openリストに含まれるか検索
+  const int open_node_index = search_node_from_set(node, open_set_);
+  if(open_node_index != -1)
+    return std::make_tuple(1, open_node_index);
+
+  // Closeリストに含まれるか検索
+  const int closed_node_index = search_node_from_set(node, closed_set_);
+  if(closed_node_index != -1)
+    return std::make_tuple(2, closed_node_index);
+
+  // OpenリストにもCloseリストにもない場合
+  return std::make_tuple(-1, -1);
+}
 
 // 隣接ノードをもとにOpenリスト・Closeリストを更新
 void GlocalPathPlanner::update_set(Node current_node)
@@ -325,25 +405,48 @@ void GlocalPathPlanner::update_set(Node current_node)
   std::vector<Node> neighbor_nodes;
   
   // 現在のノードをもとに隣接ノードを作成
-  creat_neighbor_nodes(current_node, neighbor_nodes);
+  create_neighbor_nodes(current_node, neighbor_nodes);
 
+  // Openリスト・Closeリストを更新
+  for(const auto& neighbor_node : neighbor_nodes)
+  {
+    // 障害物の場合
+    if(is_obs(neighbor_node))
+      continue;
+
+    // リストに同一ノードが含まれるか調べる
+    int flag = 0;
+    int node_index = 0;
+    std::tie(flag, node_index) = search_node(neighbor_node);
+
+    if(flag == -1)  // OpenリストにもCloseリストにもない場合
+    {
+      open_set_.push_back(neighbor_node);
+    }
+    else if(flag == 1)  // Openリストにある場合
+    {
+      if(neighbor_node.cost < open_set_[node_index].cost)
+      {
+        open_set_[node_index].cost = neighbor_node.cost;
+        open_set_[node_index].parent_index_x = neighbor_node.parent_index_x;
+        open_set_[node_index].parent_index_y = neighbor_node.parent_index_y;
+      }
+    }
+    else if(flag == 2)  // Closeリストにある場合
+    {
+      if(neighbor_node.cost < closed_set_[node_index].cost)
+      {
+        closed_set_.erase(closed_set_.begin() + node_index);
+        open_set_.push_back(neighbor_node);
+      }
+    }
+  } 
 }
-
-
-
-
-
-
-
-
-
-
-
 
 // glocal_pathを生成
 void GlocalPathPlanner::create_glocal_path()
 {
-  ros::Time now = ros::Time::now();
+  glocal_path_.header.stamp = ros::Time::now();
 
   // リストを空にする
   open_set_.clear();
@@ -368,18 +471,14 @@ void GlocalPathPlanner::create_glocal_path()
   while(!is_goal(current_node))
   {
     if(open_set_.empty())
-    {
       ROS_WARN_STREAM("No path found!!");
-    }
 
     // Openリスト内で最もコストの小さいノードを現在のノードに指定
     current_node = select_current_node();
 
     // デバック用に現在のノードを表示
     if(visualize_for_debug_)
-    {
       show_node_point(current_node);
-    }
 
     // 経路の探索
     if(is_goal(current_node))
@@ -392,23 +491,10 @@ void GlocalPathPlanner::create_glocal_path()
       transfer_node(current_node, open_set_, closed_set_);  // 現在のノードをCloseリストに移動
       update_set(current_node);  // 隣接ノードをもとにOpenリスト・Closeリストを更新
     }
-    
-
-
   }
 
-
-
-
-
-  // nav_msgs::Path path;
-  // path.header.stamp = ros::Time::now();
-  // path.header.frame_id = path_frame_;
-
-  // // glocal_pathの作成
-  // // ここにコードを追加
-
-  // pub_glocal_path_.publish(glocal_path);
+  pub_glocal_path_.publish(glocal_path_);
+  glocal_path_.poses.clear();
 }
 
 // ノードをRvizに表示（デバック用）
@@ -418,7 +504,6 @@ void GlocalPathPlanner::show_node_point(const Node node)
   current_node_.point.y = node.index_y * density_map_.info.resolution + density_map_.info.origin.position.y;
 
   pub_current_node_.publish(current_node_);
-  // ros::Duration(0.1).sleep();
 }
 
 void GlocalPathPlanner::process()
@@ -428,8 +513,10 @@ void GlocalPathPlanner::process()
 
   while(ros::ok())
   {
+    ROS_INFO_STREAM("aaaaaaaaaaaaaaaaaaaaaaaaaa");
     if(flag_density_map_ && flag_local_goal_)
     {
+      ROS_INFO_STREAM("bbbbbbbbbbbbbbbbbbbbbbbbbb");
       create_glocal_path();
     }
 
