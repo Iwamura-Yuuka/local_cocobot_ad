@@ -1,11 +1,11 @@
-# デバック用
+# division_density_map_creator用
 
 # デバック用の情報を可視化するかの設定用
 # trueなら可視化
 visualize_for_debug: true
 
 # 制御周波数[Hz]
-hz: 10                          # ループ周波数 [Hz]
+hz: 10                        # ループ周波数 [Hz]
 
 # 評価関数関連
 density_map_weight: 1.0       # density_mapのコストの重みづけ定数

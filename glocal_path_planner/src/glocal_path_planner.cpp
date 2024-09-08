@@ -35,7 +35,6 @@ void GlocalPathPlanner::density_map_callback(const nav_msgs::OccupancyGridConstP
 {
   density_map_ = *msg;
   flag_density_map_ = true;
-  ROS_INFO_STREAM("density_map is received.");
 }
 
 // local_goalのコールバック関数
@@ -47,13 +46,11 @@ void GlocalPathPlanner::local_goal_callback(const geometry_msgs::PointStampedCon
   {
     transform = tf_buffer_.lookupTransform(path_frame_, goal_frame_, ros::Time(0));
     flag_local_goal_ = true;
-    ROS_INFO_STREAM("local_goal is received.");
   }
   catch(tf2::TransformException& ex)
   {
     ROS_WARN("%s", ex.what());
     flag_local_goal_ = false;
-    ROS_INFO_STREAM("local_goal is not received.");
     return;
   }
 
@@ -513,10 +510,8 @@ void GlocalPathPlanner::process()
 
   while(ros::ok())
   {
-    ROS_INFO_STREAM("aaaaaaaaaaaaaaaaaaaaaaaaaa");
     if(flag_density_map_ && flag_local_goal_)
     {
-      ROS_INFO_STREAM("bbbbbbbbbbbbbbbbbbbbbbbbbb");
       create_glocal_path();
     }
 

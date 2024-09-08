@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <launch>
     <!-- config file path  -->
+    <!-- with_division_density_map_creator -->
     <arg name="rviz_settings" default="$(find glocal_path_planner)/config/rviz/glocal_path_planner_debug.rviz"/>
     <arg name="straight_line_creator_settings" default="$(find straight_line_creator)/config/param/straight_line_creator_debug.yaml"/>
     <arg name="local_goal_maker_settings" default="$(find local_goal_maker)/config/param/local_goal_maker_debug.yaml"/>
     <arg name="pedestrian_state_predictor_settings" default="$(find pedestrian_state_predictor)/config/param/pedestrian_state_predictor_debug.yaml"/>
     <arg name="cost_map_creator_settings" default="$(find cost_map_creator)/config/param/cost_map_creator_debug.yaml"/>
     <arg name="density_map_creator_settings" default="$(find division_density_map_creator)/config/param/debug.yaml"/>
-    <arg name="glocal_path_planner_settings" default="$(find glocal_path_planner)/config/param/glocal_path_planner_debug.yaml"/>
+    <arg name="glocal_path_planner_settings" default="$(find glocal_path_planner)/config/param/with_ddmap_creator.yaml"/>
     <arg name="target_path_planner_settings" default="$(find target_path_planner)/config/param/target_path_planner_debug.yaml"/>
     <arg name="ped_state_transformer_settings" default="$(find ped_state_transformer)/config/param/debug.yaml"/>
     <arg name="spaciss_obs_map_creator_settings" default="$(find spaciss_obs_map_creator)/config/param/spaciss_obs_map_creator_debug.yaml"/>
