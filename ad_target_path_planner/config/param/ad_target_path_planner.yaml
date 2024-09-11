@@ -11,6 +11,9 @@ goal_tolerance: 1.0  # local_goal_に対する許容誤差 [m]
 finish_dist: 2.0     # ロボットからノード先端までの距離 [m]
 # finish_dist: 4.0     # ロボットからノード先端までの距離 [m]
 
+# glocal_goal
+dist_to_update_glocal_goal: 1.0  # glocal_goalを更新する基準となるロボットとglocal_goalの距離 [m]
+
 # 速度関連
 max_vel: 1.2      # 最高並進速度 [m/s]
 max_yawrate: 4.5  # 最高旋回速度 [rad/s]
@@ -28,6 +31,7 @@ theta_reso: 0.01  # 候補となるpathを生成する際の方位の刻み幅 [
 search_step: 10    # 何ステップ先まで評価値を計算するか
 
 # 評価関数関連
-weight_heading: 0.1   # 評価関数1項目　重みづけ定数
-weight_cost_map: 0.9  # 評価関数2項目　重みづけ定数
-min_cost: 30.0        # 割り当てるコストの最小値（cost_map_creatorのyaml参照）
+weight_heading: 0.1          # 評価関数1項目　重みづけ定数
+weight_glocal_heading: 0.1   # 評価関数2項目　重みづけ定数
+weight_cost_map: 0.9         # 評価関数3項目　重みづけ定数
+min_cost: 30.0               # 割り当てるコストの最小値（cost_map_creatorのyaml参照）

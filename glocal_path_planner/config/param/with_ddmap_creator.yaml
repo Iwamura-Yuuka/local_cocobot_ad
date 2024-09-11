@@ -2,7 +2,7 @@
 
 # デバック用の情報を可視化するかの設定用
 # trueなら可視化
-visualize_for_debug: true
+visualize_for_debug: false
 
 # 制御周波数[Hz]
 hz: 10                        # ループ周波数 [Hz]
