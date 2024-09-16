@@ -23,10 +23,6 @@ AdTargetPathPlanner::AdTargetPathPlanner():private_nh_("~")
   private_nh_.param("weight_glocal_heading", weight_glocal_heading_, {0.1});
   private_nh_.param("weight_cost_map", weight_cost_map_, {0.9});
   private_nh_.param("min_cost", min_cost_, {30.0});
-  private_nh_.param("tmp_x", tmp_x_, {0.0});
-  private_nh_.param("tmp_y", tmp_y_, {0.0});
-  private_nh_.param("tmp_yaw", tmp_yaw_, {0.0});
-  private_nh_.param("glocal_path_index", glocal_path_index_, {0});
 
   //Subscriber
   sub_cost_map_ = nh_.subscribe("/cost_map", 1, &AdTargetPathPlanner::cost_map_callback, this, ros::TransportHints().reliable().tcpNoDelay());
@@ -123,7 +119,6 @@ double AdTargetPathPlanner::calc_rad_with_steer()
   const double max_rad = max_omega / max_vel_ * path_reso_;
 
   return max_rad;
-
 }
 
 // 機構的制約内で旋回可能な角度を計算(ステアなし)
