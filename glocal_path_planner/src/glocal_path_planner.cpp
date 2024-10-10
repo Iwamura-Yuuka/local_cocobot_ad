@@ -252,7 +252,10 @@ void GlocalPathPlanner::create_path(Node current_node)
       }
 
       if(i == closed_set_.size() - 1)
+      {
         ROS_ERROR_STREAM("parent node is not found.");
+        break;
+      }
     }
   }
 
@@ -468,7 +471,10 @@ void GlocalPathPlanner::create_glocal_path()
   while(!is_goal(current_node))
   {
     if(open_set_.empty())
+    {
       ROS_WARN_STREAM("No path found!!");
+      break;
+    }
 
     // Openリスト内で最もコストの小さいノードを現在のノードに指定
     current_node = select_current_node();
@@ -510,10 +516,14 @@ void GlocalPathPlanner::process()
 
   while(ros::ok())
   {
-    if(flag_density_map_ && flag_local_goal_)
+    if((flag_density_map_) && (flag_local_goal_))
     {
       create_glocal_path();
     }
+
+    // msgの受け取り判定用flagをfalseに戻す
+    flag_density_map_ = false;
+    flag_local_goal_ = false;
 
     ros::spinOnce();
     loop_rate.sleep();
