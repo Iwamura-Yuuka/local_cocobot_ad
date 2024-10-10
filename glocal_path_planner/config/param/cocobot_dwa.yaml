@@ -1,0 +1,18 @@
+# cocobot_dwa_planner用
+
+# デバック用の情報を可視化するかの設定用
+# trueなら可視化
+visualize_for_debug: flase
+
+# 制御周波数[Hz]
+hz: 5                        # ループ周波数 [Hz]
+
+# 評価関数関連
+density_map_weight: 2.0       # density_mapのコストの重みづけ定数
+
+# 終了判定
+goal_tolerance: 0.5           # local_goal_に対する許容誤差 [m]（密度マップの刻み幅の2倍以上にすること！）
+
+# frame_id
+path_frame: "base_footprint"  # 生成するpathのframe_id
+goal_frame: "odom"            # local_goalのframe_id
