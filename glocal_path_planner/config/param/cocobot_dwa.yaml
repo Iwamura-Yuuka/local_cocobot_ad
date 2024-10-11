@@ -11,7 +11,7 @@ hz: 5                        # ループ周波数 [Hz]
 density_map_weight: 2.0       # density_mapのコストの重みづけ定数
 
 # 終了判定
-goal_tolerance: 0.5           # local_goal_に対する許容誤差 [m]（密度マップの刻み幅の2倍以上にすること！）
+goal_tolerance: 2.0           # local_goal_に対する許容誤差 [m]（密度マップの刻み幅の2倍以上にすること！）
 
 # frame_id
 path_frame: "base_footprint"  # 生成するpathのframe_id
