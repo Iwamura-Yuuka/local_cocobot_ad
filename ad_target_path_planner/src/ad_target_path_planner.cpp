@@ -38,6 +38,8 @@ void AdTargetPathPlanner::cost_map_callback(const nav_msgs::OccupancyGridConstPt
 {
   cost_map_ = *msg;
   flag_cost_map_ = true;
+  flag_sub_cost_map_ = true;
+  sub_cost_map_count_ = 0;
 }
 
 // local_goalコールバック関数
@@ -67,6 +69,8 @@ void AdTargetPathPlanner::glocal_path_callback(const nav_msgs::PathConstPtr& msg
   
   if(glocal_path_.poses.size() > 0)
     flag_glocal_path_ = true;
+    flag_sub_glocal_path_ = true;
+    sub_glocal_path_count_ = 0;
 }
 
 // 機構的制約内で旋回可能な角度を計算(ステアあり)
@@ -459,7 +463,25 @@ void AdTargetPathPlanner::process()
 
   while(ros::ok())
   {
-    if((flag_cost_map_ == true) && (flag_local_goal_ == true) && (flag_glocal_path_ == true))
+    // cost_mapが更新されていない回数をカウント
+    if(flag_cost_map_ == false)
+    {
+      sub_cost_map_count_++;
+    
+      if(sub_cost_map_count_ > 3)  // 3回以上cost_mapが更新されていない場合はcost_mapのノードが正常に動作していないと判断
+        flag_sub_cost_map_ = false;
+    }
+
+    // glocal_pathが更新されていない回数をカウント
+    if(flag_glocal_path_ == false)
+    {
+      sub_glocal_path_count_++;
+    
+      if(sub_glocal_path_count_ > 3)  // 3回以上glocal_pathが更新されていない場合はglocal_pathのノードが正常に動作していないと判断
+        flag_sub_glocal_path_ = false;
+    }
+
+    if((flag_sub_cost_map_ == true) && (flag_local_goal_ == true) && (flag_sub_glocal_path_ == true))
     {
       create_path(max_rad);
     }

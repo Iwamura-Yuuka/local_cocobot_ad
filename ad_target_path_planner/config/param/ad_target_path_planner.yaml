@@ -33,7 +33,7 @@ search_step: 10    # 何ステップ先まで評価値を計算するか
 # 評価関数関連
 # weight_heading: 0.4          # 評価関数1項目　重みづけ定数
 # weight_glocal_heading: 0.2   # 評価関数2項目　重みづけ定数
-weight_heading: 0.2          # 評価関数1項目　重みづけ定数
-weight_glocal_heading: 0.4   # 評価関数2項目　重みづけ定数
+weight_heading: 0.3          # 評価関数1項目　重みづけ定数
+weight_glocal_heading: 0.6   # 評価関数2項目　重みづけ定数
 weight_cost_map: 1.5         # 評価関数3項目　重みづけ定数
-min_cost: 30.0               # 割り当てるコストの最小値（cost_map_creatorのyaml参照）
+min_cost: 50.0               # 割り当てるコストの最小値（cost_map_creatorのyaml参照）

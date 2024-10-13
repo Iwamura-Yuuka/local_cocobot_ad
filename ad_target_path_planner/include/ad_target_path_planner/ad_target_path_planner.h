@@ -87,6 +87,14 @@ private:
   bool flag_local_goal_ = false;
   bool flag_glocal_path_ = false;
 
+  // cost_mapの更新判定用
+  bool flag_sub_cost_map_ = false;
+  int sub_cost_map_count_ = 0;
+
+  // glocal_pathの更新判定用
+  bool flag_sub_glocal_path_ = false;
+  int sub_glocal_path_count_ = 0;
+
   // local_goalから一定距離内に到達したかの確認用
   bool flag_goal_check_ = false;
 
